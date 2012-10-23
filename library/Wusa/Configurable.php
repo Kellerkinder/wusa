@@ -19,7 +19,7 @@ class Configurable
      */
     protected static function getConfigfile($config)
     {
-        foreach(self::$_confDirs as $confdir)
+        foreach(self::$_confDirs[get_called_class()] as $confdir)
         {
             $path = $confdir.DIRECTORY_SEPARATOR.$config.'.php';
             if(file_exists($path))
@@ -48,7 +48,7 @@ class Configurable
         }
         if(is_dir($string))
         {
-            self::$_confDirs[] = $string;
+            self::$_confDirs[get_called_class()][] = $string;
             return true;
         }
         return false;
@@ -59,7 +59,7 @@ class Configurable
      */
     public static function resetConfdirs()
     {
-        self::$_confDirs = array();
+        self::$_confDirs[get_called_class()] = array();
     }
     /**
      * Gets database settings
