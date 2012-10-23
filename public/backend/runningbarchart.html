@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xml:lang="de" lang="en" >
+	<head>
+		<!--
+		runningBarChar -  A usefull and funny running chart jQuery plug-in
+		@copyright 2012, Rottensteiner Stefan - rottensteiner.stefan@gmx.at
+		@version 0.1.4
+		@license http://www.opensource.org/licenses/mit-license.php  - MIT
+		@license http://www.opensource.org/licenses/gpl-license.php  - GPL
+		-->
+		<meta charset="utf-8" >
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" >
+		<title>Running Bar Chart - A jQuery PlugIn</title>
+
+		<link rel="stylesheet" type="text/css" href="http://cloudfront.chroot.at/css/style.css">
+
+		<script type="text/javascript" src="http://code.jquery.com/jquery-1.8.1.min.js" ></script>
+	    <script type="text/javascript" src="jquery.runningbarchart.js"></script>
+		<link rel="stylesheet" type="text/css" href="jquery.runningbarchart.css">
+		<style>
+		.runningBarChart {
+			width: 30em;
+			height: 15em;
+			margin: 0 auto;
+		}
+
+		</style>
+
+    	<script type="text/javascript">
+			/* Initialize */
+	        $(document).ready(function(){
+				$(".runningBarChart").runningBarChart({
+					columns: {
+						number: 10
+					}
+				});
+//				startDemoAnim();
+			});
+			/* Add a column with a random value*/
+			function addAColumn (){
+				$(".runningBarChart").runningBarChart( "addColumn" , ( Math.floor(Math.random() * 100) ) );
+			}
+			/* Set the value given in the input field next to the button */
+			function setColumnValue(){
+				var newValue = $("#colum-value").val();
+				$(".runningBarChart").runningBarChart("setColumValue",  $("#colum-value").val() );
+			}
+			function getColumnValue(){
+				var v =$(".runningBarChart").runningBarChart("getColumnValue");
+			}
+			/* Do random actions with random values */
+			function startDemoAnim(){
+				stopDemoAnim();
+				window.i = window.setInterval( function(){
+					var method 	= ( (Math.round( Math.random() * 10 ) % 2) ? "addColumn" : "setColumnValue" ), // Choose "add" or "setValue" by random
+						value	= Math.min(100,Math.floor(Math.random() * 110)) ;     // Choose the value by random
+					$(".runningBarChart").runningBarChart( method  , value );
+				}, 500 );
+			}
+			/* Stop the demo */
+			function stopDemoAnim(){
+				if ( window.i ) {
+					window.clearInterval( window.i );
+				}
+				window.i = false;
+			}
+			/* Add a row */
+			function addARow (){
+				$(".runningBarChart").runningBarChart( "addRow" );
+			}
+
+			function columnLabler(value){
+				return "W: " + value;
+			}
+		</script>
+	</head>
+	<body class="page">
+		<header>
+			<h1>Running Bar Chart - A Funny But Usefull jQuery Plug-In</h1>
+		</header>
+		<section class="wrapper">
+      <br />
+      <br />    
+			<article>
+        		<h2>Was'n das jetzt schon wieder?</h2>
+				<p>
+				Dieses Plug-In ist wieder einmal aus der Notwendigkeit gepaart mit Neugier heraus entstanden. Ja, gesehen habe
+				ich das bei Google und es mag sein, daß es soetwas auch schon wo anders gibt. Spass gemacht hat es aber trotzdem ;)
+				</p>
+				<p>
+				Also ich wollte so ein ganz einfaches Chart haben, wo ich ohne viel Aufhebens Werte reinstopfen kann - und zwar im Zeitverlauf. SVG kann ich nicht, wollte ich nicht lernen und
+				schien mir in diesem Falle zu viel des Guten. Aus diesem Grunde funktioniert die gesamte Sache per JavaScript und CSS.
+				</p>
+        
+		        <h2>Live-Demo</h2>
+
+				<table style="width:100%">
+					<tr>
+						<td style="width:50%;text-align:center;">
+							Von links nach rechts ...
+						</td>
+						<td style="width:50%;text-align:center;">
+						... sknil hcan sthcer noV
+						</td>
+
+					</tr>
+					<tr>
+						<td style="width:50%;">
+		        			<div class="runningBarChart" data-runningbarchart='{"direction":"ltr","columns":{"multivalue":false}}'></div>
+						</td>
+						<td style="width:50%;">
+							<div class="runningBarChart" data-runningbarchart='{"direction":"rtl"}'></div>
+						</td>
+					</tr>
+				</table>
+
+
+		        <br clear="left"/>
+		        <br />
+		        <p>Einfach mal ausprobieren ...</p>
+				<p>Das Demo wählt alle 500 Millisekunden per Zufall aus, ob eine neue Spalte hinzugefügt oder der Wert der rechtesten Spalte neu gesetzt werden soll. Das mag
+				ein wenig hektisch ausssehen, demonstriert aber die Möglichkeiten.</p>
+		        <p style="text-align:center;">
+		          <button type="button" onclick="startDemoAnim()"> Starte Demo-Animation </button>
+		  				<button type="button" onclick="stopDemoAnim()"> Beende Demo-Animation </button>
+		  				<br />
+		  				<button type="button" onclick="addAColumn()"> Neue leere Spalte hinzugügen </button>
+		  				<button type="button" onclick="setColumnValue()"> Wert der rechtesten Spalte setzten:</button><input type="text" id="colum-value" />
+						<br />
+						<!-- <button type="button" onclick="getColumnValue()"> Aktuellen Wert anzeigen </button> -->
+						<button type="button" onclick="addARow()"> Neue Reihe hinzufügen </button>
+		        </p>
+
+		        <h2>Bedienung und Programmatisches</h2>
+				<p>Das Plugin kennt eigentlich nur wenige Funktionalitäten, nämlich die Initialisierung und ein paar nützliche Funktionen.</p>
+        
+		        <h3>1. Initialisierung</h3>
+				<p>
+				Bei der Initialisierung kann ein Object wie folgt übergeben werden (die hier angegebenen Werte entsprechen den eingebauten Default-Werten):
+				<pre><code>{
+	direction : "rtl",
+	rows: {
+		maxValue  : 100,
+		stepWidth : 20
+	},
+	columns : {
+		number: 10,
+		values: [0,0,0,0,0,0,0,0,0,0],
+	}
+}</code></pre>
+				</p>
+				<p>Die Parameter im Einzelnen:
+					<dl>
+						<dt>direction</dt>
+							<dd>Gibt die Richtung an, in die die Spalten wandern. Mögliche Werte sind <abbr title="Right To Left">RTL</abbr>  und <abbr title="Left To Right">LTR</abbr>.</dd>
+						<dt>rows</dt>
+							<dd>Dieser Bereich definiert die Reihen, also die horizontale Skala.
+								<dl>
+									<dt>maxValue</dt>
+										<dd>Der größtmögliche Wert, den eine Spalte darstellen kann. Wird eine Spalte auf einfen größeren Wert gesetzt, so wird automatisch eine weitere Reihe in der angebenen <i>stepWidth</i> hinzugefügt.</dd>
+									<dt>stepWidth</dt>
+										<dd>Die Schrittweite der einzelnen Spalten. Beispiel: Ein <i>maxValue</i> von 100 und ein <i>stepWidth</i> von 20 ergeben 5 Reihen.</dd>
+								</dl>
+							</dd>
+						<dt>columns</dt>
+							<dd>Dieser Bereich definiert die Spalten bei der Initialisierung.
+								<dl>
+									<dt>number</dt>
+										<dd>Definitert die Anzahl der leeren Spalten, die erzeugt werden sollen.</dt>
+									<dt>values</dt>
+										<dd>Definiert die Initialwerte der einzelnen Spalten. Dieser Parameter ist optional, wenn <i>number</i> gegeben ist.</dt>
+								</dl>
+							</dd>
+					</dl>
+				</p>
+
+				<p>Alternativ kann das Plugin die Konfiguration auch aus dem HTML 5 Atribute "data-" auslesen, wenn dieses mit einem
+				korrekten(!) JSON-String befüllt ist. Beispiel:
+				<pre><code>&lt;div class="runningBarChart" data-runningbarchart='{"rows":{"maxValue":200}}' &gt;&lt;/div&gt;</code></pre>
+				Neuere Browser können das.<br />
+				In diesem Fall werden die eingebauten Default-Options von den lokalen Option des HTML-Tags überschrieben und dann von den per Initialisierungsaufruf übergebenen. Mehr geht nicht - echt nicht.
+				</p>
+				<h3>2. addColum(value = 0)</h3>
+				<p>Diese Methode fügt je nach Einstellung von <i>direction</i> links oder rechts einen neue Spalte ein und setzt diese auf den übergebenen Wert.</p>
+
+				<h3>2. setColumnValue(value)</h3>
+				<p>Diese Methode setzt der Wert der ersten Spalte ( das ist je nach Einstellung von <i>direction</i> links oder rechts) auf einen neuen Wert.</p>
+
+				<h3>3. addRow(value = rows.maxValue + rows.stepWidth)</h3>
+				<p>Fügt eine neue Reihe hinzu, entweder mit dem übergebenem Wert (Vorsicht: Wird nicht überprüft!) oder einfach einen Schritt weiter.</p>
+
+				<h3>4. getColumnValue()</h3>
+				<p>Liefert den Wert der aktuellen "Arbeitsspalte". Das ist - je nach Einstellung von <i>direction</i> links oder rechts - die Spalte
+				des linken oder rechten Randes. Dabei ist eine jQuery-Besonderheit zu bearchten:<br />
+				jQueryMethoden können sich je nach Selector auch auf mehre "Objekte" beziehen. Aus diesem Grund liefert diese Funktion entweder einen
+				einzelnen Wert oder ein Array mit allen Werten der "Arbeitsspalten" aller per jQuery-Selektor angesprochenen "Objekte".
+				</p>
+
+				<h3>Styling und Design</h3>
+
+				<p>Die Styles an sich sollten selbstreden sein, außerdem würde eine genau Erklärung hier zu weit führen. Aber ein paar nicht sofort ersichtliche
+				Spezialitäten sollten hier angemerkt sein:
+				</p>
+
+				<p>
+					<ul>
+						<li>
+							Der Inhalt von Spalten erhält zusätzlich die Class <i>low</i> oder  <i>high</i>, wenn eine Spalte in der untersten oder der obersten
+							Reihe der Skala endet. Somit können Extremwerde ausgezeichnet werden. Derzeit wird das verwendent, ob das <i>label</i> vernünftig sichtbar zu machen.
+						</li>
+						<li>
+							[Version 0.1.4] Dem Ziel-Element wird noch die Class der Richtung, als "rtl" oder "ltr" begefügt. So kann mit CSS-Asudrücken wie ".runningBarChart.rtl" alles mögliche
+							weiters gestylt werden.
+							So wird zum Beispiel mit der folgenden Anweisung die Reihenbeschriftungen rechts anstatt links ausgerichtet, wenn die Spalten von links nach rechts wandern:
+							<pre><code>.runningBarChart.ltr .row-area .content .row .label { text-align: right; }</code></pre>
+						</li>
+					</ul>
+				</p>
+
+				<h3>Abschließendes</h3>
+				<p>Ist noch lange nicht perfekt - schon klar - daher hier ein paar Todos und bekannte Probleme:
+					<ul>
+						<li>Nicht auf allen möglichen Browsern getestet, funktioniert aber nachweislich unter
+							FireFox 15.1, Chrome 21.0, Internet Explorer 9.0 (8.0 hat Darstellungsfehler, 7.0 ist Schrott).<br />
+							Sorry - aber Opera mit seinen 2% ist mir herzlich egal. Nice try, guys.
+						</li>
+						<li>Ungenügendes Verhalten bei Spaltenwerten unter 0 - es werden einfach keine Werte unter 0 zugelassen.</li>
+						<li>Animiation ist immer da, kein Ein- oder Ausschalten.</li>
+						<li>Fehlende Event-Handler für Custom-Code.</li>
+						<li>Kein "on-the-fly" Umschalten der Bewegungsrichtung.</li>
+						<li>Keine Möglichkeit, Spalten- und Zeilenbeschriftungen zu beeinflussen. Zb: Kein "100%", "50 Zugriffe" oder ähnliches.</li>
+						<li>Reihen werden nicht wieder reduziert, wenn die Spaltenwerte zu klein sein.</li>
+						<li><span style="text-decoration:line-through;">Bei "LTR" wird die Spalte ganz rechts nicht schön weich rausgeschoben, sondern verschwindet einfach.</span> Version 0.1.4</li>
+					</ul>
+				</p>
+				<p>Und zum Runterladen gibt es die <a href="runningBarChart.zip" title="Download: runningBarChart.zip">aktuellste Version 0.1.4</a> natürlich auch noch. Wünsche, Anregungen und Beschwerden bitte an einfach an
+				<a href="mailto:salzamt@chroot.at?subject=runningBarChart">salzamt@chroot.at</a> senden.</p>
+
+				<br />
+				<br />
+			</article>
+		</section>
+		<footer>
+      	<div id="fb-root"></div>
+            Running Bar Chart Example
+		</footer>
+	</body>
+</html>
