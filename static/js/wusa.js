@@ -1,6 +1,6 @@
 /**
  * WUSA - Web USage Analysis 
- * (C) 2012 - Lukas Plattner & Stefan Rottensteiner
+ * (C) 2012 by The Kellerkinder | Lukas Plattner & Stefan Rottensteiner
  */
 (function() {				
 	/**
