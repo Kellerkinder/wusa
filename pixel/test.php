@@ -1,5 +1,5 @@
 <?php
-require_once 'init.php';
+require_once '../init.php';
 
 $db = new Wusa\Db(Wusa\Db::CONNECTION_TYPE_SLAVE,'single');
 $sql = $db->getSql();

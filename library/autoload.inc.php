@@ -6,11 +6,11 @@
 // Include-Pfad erweitern
 ini_set('include_path', ini_get('include_path') . PATH_SEPARATOR . LIBRARY_PATH);
 
-include LIBRARY_PATH . 'Zend/Loader/AutoloaderFactory.php';
+include LIBRARY_PATH . DIRECTORY_SEPARATOR. 'Zend/Loader/AutoloaderFactory.php';
 $autoloader = Zend\Loader\AutoloaderFactory::factory(array(
     'Zend\Loader\StandardAutoloader' => array(
         'namespaces' => array(
-            'Wusa' => LIBRARY_PATH . 'Wusa',
+            'Wusa' => LIBRARY_PATH. DIRECTORY_SEPARATOR . 'Wusa',
         ),
         'autoregister_zf' => true
     ),

@@ -54,7 +54,7 @@ class Config
      */
     public function loadConfigFile($file)
     {
-        $filepath = CONFIG_PATH.$file;
+        $filepath = CONFIG_PATH.DIRECTORY_SEPARATOR.$file;
         try{
             if(!file_exists($filepath))
             {
