@@ -86,7 +86,7 @@
 	        /* Set hostname */
 	        src+=document.location.host;
 	        /* Set path where the requested is awaited */
-	        src+="/cp.php?cmd=" + cmd + "&";
+	        src+="/pixel/cp.php?cmd=" + cmd + "&";
 			/* Ensure the connection ID */
 	        ensureIDS(values);
 	        /* Ensure current user time */

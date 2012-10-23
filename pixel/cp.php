@@ -3,12 +3,14 @@ ini_set('display_errors',1);
 error_reporting(E_ALL);
 require_once('../init.php');
 //Autoloader
-//Wusa_Counter::count();
-
+use Wusa\Couter;
+Wusa\Counter::count();
 // Bild ausgeben :)
-Header('Content-Type: image/gif');
-echo base64_decode('R0lGODlhAwABAIABALCvn////yH5BAEAAAEALAAAAAADAAEAAAICRFIAOw==');
+//Header('Content-Type: image/gif');
+//echo base64_decode('R0lGODlhAwABAIABALCvn////yH5BAEAAAEALAAAAAADAAEAAAICRFIAOw==');
+echo "Done";
 
-register_shutdown_function(array('Tk_App_Counter','count'));
+
+//register_shutdown_function(array('Wusa\Counter','count'));
 
 ?>

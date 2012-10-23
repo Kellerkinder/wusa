@@ -1,5 +1,7 @@
 <?php
 namespace Wusa;
+use Zend\Db\Sql\Where;
+use Zend\Db\Sql\Expression;
 /**
  * Counter
  * @author lukas.plattner
@@ -21,14 +23,18 @@ abstract class Counter{
      * @var array
      */
     protected $mapping = array();
-    
+    private $db = null;
     /**
      * Returns Databaseconnection
-     * @return \Zend\Db\Adapter\Abstract
+     * @return \Wusa\Db
      */
     protected function getDb()
     {
-        return Tomato_Db::factory('master','cp');
+        if(!$this->db)
+        {
+            $this->db = new Db(Db::CONNECTION_TYPE_MASTER,Config::getInstance()->counter->db->get('connection'));
+        }
+        return $this->db;
     }
     /**
      * Static Method to instance the correct class for counting
@@ -36,12 +42,22 @@ abstract class Counter{
     public static function count()
     {
         try{
+            if(!array_key_exists('cmd',$_REQUEST))
+            {
+                Config::doLog('CP: no cmd defined ',\Zend\Log\Logger::NOTICE);
+                return;
+            }
             $function = ucfirst(trim($_REQUEST['cmd']));
-            $class = __NAMESPACE__.'\\'.__CLASS__.'\\'.$function;
+            $class =__CLASS__.'\\'.$function;
             if(class_exists($class))
             {
                 $cl = new $class();
                 $cl->doCount();
+            }
+            else
+            {
+                Config::doLog('CP: Invalid function '.var_export($function,true),\Zend\Log\Logger::NOTICE);
+                return;
             }
         }
         catch(Exception $e) //Wenn was Schief geht abfangen
@@ -80,6 +96,13 @@ abstract class Counter{
         
         $data = $this->refactorDataForSave($this->data);
         $this->getDb()->insert($this->table, $data);
+
+/*
+        $db = $this->getDb();
+        $sql = $db->getSql();
+        $insert = $sql->insert($this->table);
+        $insert->values($data);
+        $result = $db->query($insert);*/
     }
     
     protected function checkCounterId()
@@ -89,16 +112,12 @@ abstract class Counter{
         
         try{
             $account = $this->getAccount($aId[1]);
-//             echo "account: ";var_dump($account);echo"<br>\n";
+            var_dump($account);
             if($account == false) return false;
             
             $counter = $this->getCounter($aId[2]);
-//             echo "counter: ";var_dump($counter);echo"<br>\n";
+            var_dump($counter);
             if($counter == false) return false;
-//             $_REQUEST['_wuhn'] = 'kurier.at';
-//             echo $counter->domainregex."<br>\n";
-//             echo $_REQUEST['_wuhn']."<br>\n";
-//             var_dump(preg_match($counter->domainregex, $_REQUEST['_wuhn']));
             if(!preg_match($counter->domainregex,$_REQUEST['_wuhn'])) return false; 
             
             return true;
@@ -112,56 +131,84 @@ abstract class Counter{
     protected function getAccount($acc)
     {
         $cache = $this->getCache();
-        $key = Tk_Cache::sanitizeId('account_'.$acc);
-        if(!($account = $cache->load($key)))
+        $key = Cache::sanitizeId('account_'.$acc);
+        if($cache->hasItem($key))
+        {
+            $account = $cache->getItem($key);
+        }
+        else
         {
             $db = $this->getDb();
-            $account = $db->select()->from('stamm_account')->where('accountId = ?',$acc)->query()->fetchObject();
-            $cache->save($account);
+            $sql = $db->getSql();
+            $where = new Where();
+            $where->equalTo('accountId',$acc);
+            $select = $sql->select('stamm_account')->where($where);
+
+            $return = $db->query($select);
+            $account = $return->current();
+            $cache->setItem($key,$account);
         }
         return $account;
     }
     protected function getCounter($trac)
     {
         $cache = $this->getCache();
-        $key = Tk_Cache::sanitizeId('counter_'.$trac);
-        if(!($counter = $cache->load($key)))
+        $key = Cache::sanitizeId('counter_'.$trac);
+        if($cache->hasItem($key))
+        {
+            $counter = $cache->getItem($key);
+        }
+        else
         {
             $db = $this->getDb();
-            $counter = $db->select()->from('stamm_counter')->where('counterId = ?',$trac)->query()->fetchObject();
-            $cache->save($counter);
+            $sql = $db->getSql();
+            $where = new Where();
+            $where->equalTo('counterId',$trac);
+            $select = $sql->select('stamm_counter')->where($where);
+            $return = $db->query($select);
+            $counter = $return->current();
+            $cache->setItem($key,$counter);
         }
         return $counter;
     }
     
     
     /**
-     * @return Zend_Cache
+     * @return \Zend\Cache\Storage\StorageInterface
      */
     protected function getCache()
     {
-        return Tk_Cache::factory('shop','shop');
+        return Cache::factory('default');
     }
     
     protected function getUniqeClient()
     {
         $db = $this->getDb();
+        $sql = $db->getSql();
         $data = array();
         $data['ip'] = $_SERVER['REMOTE_ADDR'];
         $data['useragent'] = $_SERVER['HTTP_USER_AGENT'];
         $data['session'] = explode('-',$_REQUEST['_wucid']);
         $data['session'] = $data['session'][2].'-'.$data['session'][3];
         $data['screenresolution'] = $_REQUEST['_wusr'];
-        
-        $return = $db->select()->from('cp_uc','uc')->where('uc = ?',new Zend_Db_Expr('md5('.$db->quoteInto('?', $data['session'].$data['screenresolution']).')'))->query();
-        if($return->rowCount()>0)
+
+
+        $ucExpr = new Expression('md5(?)',$data['session'].$data['screenresolution']);
+        $where = new Where();
+        $where->equalTo('uc',$ucExpr);
+        $select = $sql->select('cp_uc','uc')->where($where);
+
+        $return = $db->query($select);
+        if($return->count()>0)
         {
-            return $return->fetchColumn();
+            return current($return->current());
         }
         else {
             try{
-                $data['uc'] = new Zend_Db_Expr('md5('.$db->quoteInto('?', $data['session'].$data['screenresolution']).')');
-                $db->insert('cp_uc', $data);
+                $data['uc'] = $ucExpr;
+                $insert = $sql->insert('cp_uc');
+                $insert->values($data);
+                $db->query($insert);
             }
             catch(Exception $e)
             {
@@ -174,20 +221,31 @@ abstract class Counter{
     protected function getPageId()
     {
         $db = $this->getDb();
+        $sql = $db->getSql();
         $data = array();
         $data ['url'] = $_REQUEST['_wudp'];
-        $data ['domain'] = $_REQUEST['_wuhn'];       
-        $return = $db->select()->from('cp_page','pageId')->where('url = ?',$data['url'])->where('domain = ?',$data['domain'])->query();
+        $data ['domain'] = $_REQUEST['_wuhn'];
+
+        $where = new Where();
+        $where->equalTo('url',$data['url']);
+        $where->equalTo('domain',$data['domain']);
+
+        $select = $sql->select('cp_page','pageId')->where($where);
+        $return = $db->query($select);
+        //$return = $db->select()->from('cp_page','pageId')->where('url = ?',$data['url'])
+        //    ->where('domain = ?',$data['domain'])->query();
         
-        if($return->rowCount()>0)
+        if($return->count()>0)
         {
-            return $return->fetchColumn();
+            return current($return->current());
         }
         else {
-            $db->insert('cp_page', $data);
-            return $db->lastInsertId();
+            $insert = $sql->insert('cp_page');
+            $insert->values($data);
+            $result = $db->query($insert);
+
+            return $db->getAdapter()->getDriver()->getLastGeneratedValue();
         }
-        
     }
 }
 ?>

@@ -1,5 +1,5 @@
 <?php
-require_once '../init.php';
+/*require_once '../init.php';
 
 $db = new Wusa\Db(Wusa\Db::CONNECTION_TYPE_SLAVE,'single');
 $sql = $db->getSql();
@@ -19,3 +19,16 @@ foreach ($results as $row) {
 
 
 //var_dump($db->query('select * from stamm_account'));
+*/?>
+<html>
+<body>
+<script>
+
+    var _wuq = _wuq || [];
+    _wuq.push(['_wuaid', 'KU-1-1']);
+    _wuq.push(['trackPageview']);
+</script>
+<script language="JavaScript" src="../static/js/wusa.js">
+</script>
+</body>
+</html>
