@@ -96,7 +96,7 @@ class Config
         {
             //Logger is Defined in the Config
             $loggerclass = '\\'.$this->configdata->system->logger->class;
-            echo $loggerclass;
+            //echo $loggerclass;
             $r = new \ReflectionClass($loggerclass);
             $writer = $r->newInstanceArgs((array)$this->configdata->system->logger->options->toArray());
 
