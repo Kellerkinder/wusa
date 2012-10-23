@@ -45,7 +45,6 @@ class Config
     {
         $this->configdata = new \Zend\Config\Config(array());
         $this->loadConfigFile('global.ini');
-        Db::addConfdir($this->configdata->system->db->configdir->toArray());
     }
     /**
      * Loads a Configfile into internal Data
