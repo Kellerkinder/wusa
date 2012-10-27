@@ -96,13 +96,6 @@ abstract class Counter{
         
         $data = $this->refactorDataForSave($this->data);
         $this->getDb()->insert($this->table, $data);
-
-/*
-        $db = $this->getDb();
-        $sql = $db->getSql();
-        $insert = $sql->insert($this->table);
-        $insert->values($data);
-        $result = $db->query($insert);*/
     }
     
     protected function checkCounterId()

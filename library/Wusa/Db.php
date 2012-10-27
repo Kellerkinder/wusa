@@ -14,6 +14,8 @@ class Db extends Configurable
      */
     const CONNECTION_TYPE_SLAVE = 'slave';
     const CONNECTION_TYPE_MASTER = 'master';
+    const CONNECTION_TYPE_READONLY = 'slave';
+    const CONNECTION_TYPE_READ_WRITE = 'master';
     /**
      * Saves the opened Connections
      * @var array

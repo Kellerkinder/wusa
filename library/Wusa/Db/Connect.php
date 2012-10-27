@@ -11,7 +11,7 @@ class Connect
      * @var array
      */
     protected static $_connectors = array();
-    public static function connect($config, $type, $serverName)
+    public static function connect($config, $type)
     {
         $connectionType = '\\Wusa\\Db\\Connect\\'.$config->get('connectionType','Single');
         if(!array_key_exists($connectionType, self::$_connectors))
@@ -23,6 +23,6 @@ class Connect
             }
             self::$_connectors[$connectionType] = new $connectionType();
         }
-        return self::$_connectors[$connectionType]->connect($config, $type, $serverName);
+        return self::$_connectors[$connectionType]->connect($config, $type);
     }
 }

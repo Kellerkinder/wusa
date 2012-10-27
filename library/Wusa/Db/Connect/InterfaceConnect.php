@@ -5,5 +5,5 @@ namespace Wusa\Db\Connect;
  */
 interface InterfaceConnect
 {
-    public function connect($config, $type, $serverName);
+    public function connect(\Zend\Config\Config $config, $type);
 }
