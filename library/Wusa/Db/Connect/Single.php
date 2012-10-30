@@ -27,9 +27,15 @@ class Single implements InterfaceConnect
             $db = new \Zend\Db\Adapter\Adapter($params);
             //$db->setFetchMode(\Zend\Db::FETCH_OBJ);
             //$db->getConnection();
-            $db->driver->getConnection();
-            $db->driver->createStatement();
-            return $db;
+            $db->driver->getConnection()->connect();
+            if($db->driver->getConnection()->isConnected())
+            {
+                return $db;
+            }
+            else{
+                return null;
+            }
+
         } catch (Exception $ex) {
             Config::doLog(__METHOD__.': Exception '.$ex->getMessage(),\Zend\Log\Logger::ERR);
             return null;
