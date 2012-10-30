@@ -9,6 +9,8 @@ define('APPLICATION_PATH',dirname(__FILE__));
 define('CONFIG_PATH',APPLICATION_PATH.DIRECTORY_SEPARATOR.'conf');
 //Basepath of the Library
 define('LIBRARY_PATH',APPLICATION_PATH.DIRECTORY_SEPARATOR.'library');
+//Define Projectname
+define('PROJECTNAME','WUSA');
 
 //Init Autoloader
 require_once(LIBRARY_PATH.DIRECTORY_SEPARATOR.'autoload.inc.php');
