@@ -30,4 +30,8 @@ class Metadata extends \Zend\Db\Metadata\Metadata
 
         throw new \Exception('cannot create source from adapter');
     }
+    public function createTable(Object\TableObject $table)
+    {
+        $this->source->createTable($table);
+    }
 }

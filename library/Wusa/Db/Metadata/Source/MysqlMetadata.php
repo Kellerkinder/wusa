@@ -256,4 +256,55 @@ class MysqlMetadata extends \Zend\Db\Metadata\Source\MysqlMetadata
 
         return $column;
     }
+    private function quoteValue(&$value)
+    {
+        $p = $this->adapter->getPlatform();
+        $value = $p->quoteValue($value);
+    }
+    public function createTable(Object\TableObject $table)
+    {
+        $p = $this->adapter->getPlatform();
+        $coldefinition = array();
+        foreach($table->getColumns() as $column)
+        {
+            $col = "\t".$column->getName().' '.$column->getDataType();
+            if($column->getCharacterMaximumLength() && !($column->getDataType() == 'enum' || $column->getDataType() == 'set'))
+                $col .= ' ('.$column->getCharacterMaximumLength().') ';
+            if($column->getNumericPrecision())
+                $col .= ' ('.$column->getNumericPrecision().') ';
+            if($column->getNumericScale())
+                $col .= ' ('.$column->getNumericScale().') ';
+            if($column->getErrata('permitted_values'))
+            {
+                $errata = $column->getErrata('permitted_values');
+                array_walk($errata,array($this,'quoteValue'));
+                $col .= ' ('.implode(',',$errata).') ';
+            }
+            if($column->getNumericUnsigned())
+                $col .= ' unsigned ';
+            if($column->getIsNullable())
+                $col .= ' NULL ';
+            else
+                $col .= ' NOT NULL ';
+            if($column->getColumnDefault())
+                $col .= ' DEFAULT '.(is_numeric($column->getColumnDefault())?$column->getColumnDefault():'"'.$column->getColumnDefault().'"').' ';
+            if($column->getComment())
+                $col .= ' COMMENT \''.$column->getComment().'\' ';
+            //$col .= ",\n";
+            $coldefinition[] = $col;
+        }
+        $sql = 'CREATE TABLE '.$table->getName(). " ( \n";
+        $sql .= implode(",\n",$coldefinition)."\n";
+        $sql .= ' ) ';
+        if($table->getEngine())
+        {
+            $sql .= ' ENGINE = \''.$table->getEngine().'\'';
+        }
+        if($table->getComment())
+        {
+            $sql .= ' COMMENT = "'.$table->getComment().'"';
+        }
+        //echo $sql.';';
+        return $this->adapter->query($sql,Adapter::QUERY_MODE_EXECUTE);
+    }
 }
