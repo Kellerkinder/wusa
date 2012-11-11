@@ -1031,4 +1031,53 @@ $ind->setComment(NULL);
 $indexes[] = $ind;
 $table->setIndexes($indexes);
 $tables[] = $table;
+$triggers = array();
+$trigger = new Wusa\Db\Metadata\Object\TriggerObject();
+$trigger->setName('pageviewId');
+$trigger->setEventManipulation('INSERT');
+$trigger->setEventObjectCatalog('def');
+$trigger->setEventObjectSchema('cp_cp');
+$trigger->setEventObjectTable('cp_pageview');
+$trigger->setActionOrder('0');
+$trigger->setActionCondition(NULL);
+$trigger->setActionStatement('BEGIN
+declare v_id bigint unsigned default 0;
+select max(pageviewId) + 1 into v_id from cp_pageview where uc = new.uc;
+if(v_id IS NULL) THEN
+set v_id = 1;
+END IF;
+set new.pageviewId = v_id;
+END');
+$trigger->setActionOrientation('ROW');
+$trigger->setActionTiming('BEFORE');
+$trigger->setActionReferenceOldTable(NULL);
+$trigger->setActionReferenceNewTable(NULL);
+$trigger->setActionReferenceOldRow('OLD');
+$trigger->setActionReferenceNewRow('NEW');
+$trigger->setCreated(NULL);
+$triggers[] = $trigger;
+$trigger = new Wusa\Db\Metadata\Object\TriggerObject();
+$trigger->setName('pageviewArchivId');
+$trigger->setEventManipulation('INSERT');
+$trigger->setEventObjectCatalog('def');
+$trigger->setEventObjectSchema('cp_cp');
+$trigger->setEventObjectTable('cp_pageview_archiv');
+$trigger->setActionOrder('0');
+$trigger->setActionCondition(NULL);
+$trigger->setActionStatement('BEGIN
+declare v_id bigint unsigned default 0;
+select max(pageviewId) + 1 into v_id from cp_pageview_archiv where uc = new.uc;
+if(v_id IS NULL) THEN
+set v_id = 1;
+END IF;
+set new.pageviewId = v_id;
+END');
+$trigger->setActionOrientation('ROW');
+$trigger->setActionTiming('BEFORE');
+$trigger->setActionReferenceOldTable(NULL);
+$trigger->setActionReferenceNewTable(NULL);
+$trigger->setActionReferenceOldRow('OLD');
+$trigger->setActionReferenceNewRow('NEW');
+$trigger->setCreated(NULL);
+$triggers[] = $trigger;
 ?>

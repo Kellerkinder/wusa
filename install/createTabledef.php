@@ -49,10 +49,26 @@ $table->setColumns($cols);
 echo '<pre>';
 $metadata = new Wusa\Db\Metadata\Metadata($dbCp->getAdapter());
 
-// get the table names
-$tableNames = $metadata->getTableNames();
 //echo "Trigger: ".PHP_EOL;
 //var_dump($metadata->getTriggers());
+
+$triggerVars = array(
+    'Name',
+    'EventManipulation',
+    'EventObjectCatalog',
+    'EventObjectSchema',
+    'EventObjectTable',
+    'ActionOrder',
+    'ActionCondition',
+    'ActionStatement',
+    'ActionOrientation',
+    'ActionTiming',
+    'ActionReferenceOldTable',
+    'ActionReferenceNewTable',
+    'ActionReferenceOldRow',
+    'ActionReferenceNewRow',
+    'Created',
+);
 
 $colVars = array(
     'OrdinalPosition',
@@ -97,6 +113,8 @@ $prefixMaster = $config->master->db->prefix;
 '.PHP_EOL.PHP_EOL;
 
 echo '$tables = array();'.PHP_EOL;
+// get the table names
+$tableNames = $metadata->getTableNames();
 foreach ($tableNames as $tableName) {
     $table = $metadata->getTable($tableName);
     $printTableName = '"'.str_replace(array('cp_','master_'),array('{$prefixCp}','{$prefixMaster}'),$tableName).'"';
@@ -151,31 +169,21 @@ foreach ($tableNames as $tableName) {
     echo '$table->setIndexes($indexes);'.PHP_EOL;
     echo '$tables[] = $table;';
     echo PHP_EOL;
-    /*echo '    With constraints: ' . PHP_EOL;
-
-    echo "\$metadata->createTable(\$table);\n";
-
-    foreach ($metadata->getConstraints($tableName) as $constraint) {
-        echo '        ' . $constraint->getName()
-            . ' -> ' . $constraint->getType()
-            . PHP_EOL;
-        if (!$constraint->hasColumns()) {
-            continue;
-        }
-        echo '            column: ' . implode(', ', $constraint->getColumns());
-        if ($constraint->isForeignKey()) {
-            $fkCols = array();
-            foreach ($constraint->getReferencedColumns() as $refColumn) {
-                $fkCols[] = $constraint->getReferencedTableName() . '.' . $refColumn;
-            }
-            echo ' => ' . implode(', ', $fkCols);
-        }
-        echo PHP_EOL;
-
-    }
-
-    echo '----' . PHP_EOL;*/
 }
+
+$triggers = $metadata->getTriggers();
+echo '$triggers = array();'.PHP_EOL;
+foreach($triggers as $trigger)
+{
+    echo '$trigger = new Wusa\Db\Metadata\Object\TriggerObject();'.PHP_EOL;
+    foreach($triggerVars as $tVar)
+    {
+        echo '$trigger->set'.$tVar.'('.var_export(call_user_func(array($trigger,'get'.$tVar)),true).');'.PHP_EOL;
+    }
+    echo '$triggers[] = $trigger;'.PHP_EOL;
+}
+
+
 
 echo htmlspecialchars('?>').PHP_EOL;
 //var_dump($table);
