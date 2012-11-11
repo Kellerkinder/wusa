@@ -30,7 +30,7 @@ $sqlCp = str_replace($replacement_search,$replacement_replace,$sqlCp);
 $sqlMaster = str_replace($replacement_search,$replacement_replace,$sqlMaster);
 
 $dbCp = new Wusa\Db(Wusa\Db::CONNECTION_TYPE_MASTER,$config->counter->db->connection);
-$dbMaster = new Wusa\Db(Wusa\Db::CONNECTION_TYPE_MASTER,$config->master->db->connection);
+//$dbMaster = new Wusa\Db(Wusa\Db::CONNECTION_TYPE_MASTER,$config->master->db->connection);
 
 $stmt = $dbCp->getSql();
 use Zend\Db\Metadata\Object\TableObject;
@@ -66,21 +66,52 @@ $colVars = array(
     'NumericUnsigned',
     'Comment',
 );
+
+$constraintVars = array(
+//    'Name',
+ //   'TableName',
+    'SchemaName',
+    'Type',
+    'Columns',
+    'ReferencedTableSchema' ,
+    'ReferencedTableName',
+//    'ReferencedColumns',
+    'MatchOption',
+    'UpdateRule',
+    'DeleteRule',
+    'CheckClause'
+);
+
+$indexVars = array(
+    'Unique',
+    'Type',
+    'Columns',
+    'Comment'
+);
+
+echo htmlspecialchars('<?php').PHP_EOL.PHP_EOL;
+echo '//Prefix for CP Tables
+$prefixCp = $config->counter->db->prefix;
+//Prefix for Mastertables
+$prefixMaster = $config->master->db->prefix;
+'.PHP_EOL.PHP_EOL;
+
 echo '$tables = array();'.PHP_EOL;
 foreach ($tableNames as $tableName) {
     $table = $metadata->getTable($tableName);
-    echo "\$table = new \Wusa\Db\Metadata\Object\TableObject('$tableName');\n";
+    $printTableName = '"'.str_replace(array('cp_','master_'),array('{$prefixCp}','{$prefixMaster}'),$tableName).'"';
+    echo "\$table = new \Wusa\Db\Metadata\Object\TableObject($printTableName);\n";
     echo "\$table->setComment('".$table->getComment()."');\n";
 //   echo 'In Table ' . $tableName . PHP_EOL;
 
-    //var_dump($table);
     echo '$cols = array(); ' . PHP_EOL;
     foreach ($table->getColumns() as $column) {
-        echo '$col = new \Wusa\Db\Metadata\Object\ColumnObject(\''.$column->getName().'\',\''.$tableName.'\');'. PHP_EOL;
+        echo '$col = new \Wusa\Db\Metadata\Object\ColumnObject(\''.$column->getName().'\','.$printTableName.');'. PHP_EOL;
         foreach($colVars as $colVar)
         {
             echo '$col->set'.$colVar.'('.var_export(call_user_func(array($column,'get'.$colVar)),true).');'.PHP_EOL;
         }
+        echo '$col->setTableName('.$printTableName.');'.PHP_EOL;
         if($column->getErrata('permitted_values'))
         {
 
@@ -90,6 +121,34 @@ foreach ($tableNames as $tableName) {
         echo '$cols[] = $col;'.PHP_EOL;
     }
     echo '$table->setColumns($cols);'.PHP_EOL;
+    echo '$constraints = array();'.PHP_EOL;
+    foreach($table->getConstraints() as $constraint)
+    {
+        echo '$const = new \Zend\Db\Metadata\Object\ConstraintObject('.var_export($constraint->getName(),true).','.$printTableName.');'.PHP_EOL;
+        foreach($constraintVars as $cVar)
+        {
+            echo '$const->set'.$cVar.'('.var_export(call_user_func(array($constraint,'get'.$cVar)),true).');'.PHP_EOL;
+        }
+        if(is_array($constraint->getReferencedColumns()))
+        {
+            $cVar = 'ReferencedColumns';
+            echo '$const->set'.$cVar.'('.var_export(call_user_func(array($constraint,'get'.$cVar)),true).');'.PHP_EOL;
+        }
+        echo '$constraints[] = $const;'.PHP_EOL;
+    }
+    echo '$table->setConstraints($constraints);'.PHP_EOL;
+
+    echo '$indexes = array();'.PHP_EOL;
+    foreach($table->getIndexes() as $index)
+    {
+        echo '$ind = new \Wusa\Db\Metadata\Object\IndexObject('.var_export($index->getName(),true).','.$printTableName.');'.PHP_EOL;
+        foreach($indexVars as $iVar)
+        {
+            echo '$ind->set'.$iVar.'('.var_export(call_user_func(array($index,'get'.$iVar)),true).');'.PHP_EOL;
+        }
+        echo '$indexes[] = $ind;'.PHP_EOL;
+    }
+    echo '$table->setIndexes($indexes);'.PHP_EOL;
     echo '$tables[] = $table;';
     echo PHP_EOL;
     /*echo '    With constraints: ' . PHP_EOL;
@@ -118,6 +177,7 @@ foreach ($tableNames as $tableName) {
     echo '----' . PHP_EOL;*/
 }
 
+echo htmlspecialchars('?>').PHP_EOL;
 //var_dump($table);
 //echo $sqlCp;
 //$dbCp->getDriver()->getConnection()->getResource()->multi_query($sqlCp);
