@@ -436,17 +436,19 @@ class MysqlMetadata extends \Zend\Db\Metadata\Source\MysqlMetadata
         //echo $sql.';';
         return $this->adapter->query($sql,Adapter::QUERY_MODE_EXECUTE);
     }
+
+    /**
+     * Creates a new Trigger
+     * @param \Wusa\Db\Metadata\Object\TriggerObject $trigger
+     * @return \Zend\Db\Adapter\Driver\StatementInterface|\Zend\Db\ResultSet\ResultSet
+     */
     public function createTrigger(Object\TriggerObject $trigger)
     {
-        $sql = 'CREATE TRIGGER `pageviewArchivId` BEFORE INSERT ON `cp_pageview_archiv`
-FOR EACH ROW BEGIN
-declare v_id bigint unsigned default 0;
-select max(pageviewId) + 1 into v_id from cp_pageview_archiv where uc = new.uc;
-if(v_id IS NULL) THEN
-set v_id = 1;
-END IF;
-set new.pageviewId = v_id;
-END';
+        $sql = 'CREATE TRIGGER `'.$trigger->getName().'` '
+            . ' '.$trigger->getActionTiming().' '. $trigger->getEventManipulation()
+            . ' ON `'.$trigger->getEventObjectTable().'` '
+            . ' FOR EACH ROW '.$trigger->getActionStatement();
+
         return $this->adapter->query($sql,Adapter::QUERY_MODE_EXECUTE);
 
     }
