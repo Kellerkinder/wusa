@@ -7,8 +7,6 @@ use Zend\Db\Adapter\Adapter;
  */
 class Metadata extends \Zend\Db\Metadata\Metadata
 {
-
-
     /**
      * Create source from adapter
      *
@@ -33,5 +31,10 @@ class Metadata extends \Zend\Db\Metadata\Metadata
     public function createTable(Object\TableObject $table)
     {
         $this->source->createTable($table);
+    }
+
+    public function createTrigger(Object\TriggerObject $trigger)
+    {
+        $this->source->createTrigger($trigger);
     }
 }

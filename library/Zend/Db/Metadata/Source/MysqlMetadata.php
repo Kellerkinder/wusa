@@ -368,7 +368,7 @@ class MysqlMetadata extends AbstractSource
             $sql .= ' AND ' . $p->quoteIdentifierChain(array('T','TABLE_SCHEMA'))
             . ' != ' . $p->quoteValue('INFORMATION_SCHEMA');
         }
-
+echo $sql;
         $results = $this->adapter->query($sql, Adapter::QUERY_MODE_EXECUTE);
 
         $data = array();

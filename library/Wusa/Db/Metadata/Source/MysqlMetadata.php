@@ -205,7 +205,106 @@ class MysqlMetadata extends \Zend\Db\Metadata\Source\MysqlMetadata
         }
         $table->setComment($data['comment']);
         $table->setColumns($this->getColumns($tableName, $schema));
+        $table->setConstraints($this->getConstraints($tableName, $schema));
+        $table->setIndexes($this->getIndexes($tableName,$schema));
         return $table;
+    }
+
+    public function getIndexes($table, $schema = null)
+    {
+        if ($schema === null) {
+            $schema = $this->defaultSchema;
+        }
+
+        $this->loadIndexData($table, $schema);
+
+        $indexes = array();
+        foreach (array_keys($this->data['indexes'][$schema][$table]) as $constraintName) {
+            $indexes[] = $this->getIndex($constraintName, $table, $schema);
+        }
+
+        return $indexes;
+    }
+
+
+    public function getIndex($indexName, $table, $schema = null)
+    {
+        if ($schema === null) {
+            $schema = $this->defaultSchema;
+        }
+
+        $this->loadConstraintData($table, $schema);
+
+        if (!isset($this->data['indexes'][$schema][$table][$indexName])) {
+            throw new \Exception('Cannot find a Index by that name in this table');
+        }
+
+        $info = $this->data['indexes'][$schema][$table][$indexName];
+        $index = new Object\IndexObject($indexName, $table, $schema);
+
+        foreach (array(
+                     'index_type'         => 'setType',
+                     'unique'            => 'setUnique',
+                     'columns'            => 'setColumns',
+                     'comment'            => 'setComment',
+                 ) as $key => $setMethod) {
+            if (isset($info[$key])) {
+                $index->{$setMethod}($info[$key]);
+            }
+        }
+
+        return $index;
+    }
+
+
+    protected function loadIndexData($table, $schema)
+    {
+        if (isset($this->data['indexes'][$schema][$table])) {
+            return;
+        }
+
+        $this->prepareDataHierarchy('indexes', $schema, $table);
+
+        $isColumns = array(
+            array('S','TABLE_NAME'),
+            array('S','INDEX_NAME'),
+            array('S','INDEX_TYPE'),
+            array('S','COMMENT'),
+            array('S', 'NULLABLE'),
+            array('S', 'NON_UNIQUE'),
+        );
+
+        $p = $this->adapter->getPlatform();
+
+        array_walk($isColumns, function (&$c) use ($p) {
+            $c = $p->quoteIdentifierChain($c);
+        });
+
+        $sql = 'SELECT ' . implode(', ', $isColumns)
+            . ' ,GROUP_CONCAT( '.$p->quoteIdentifierChain(array('S','COLUMN_NAME'))
+                .' ORDER BY '.$p->quoteIdentifierChain(array('S','SEQ_IN_INDEX')).' ) AS `COLUMNS`'
+            . ' FROM ' . $p->quoteIdentifierChain(array('INFORMATION_SCHEMA','STATISTICS')) . ' as S'
+
+             . ' WHERE ' . $p->quoteIdentifierChain(array('S','TABLE_NAME'))
+            . ' = ' . $p->quoteValue($table)
+            . ' AND ' . $p->quoteIdentifierChain(array('S','TABLE_SCHEMA'))
+            . ' = ' . $p->quoteValue($schema)
+            . ' GROUP BY 1,2';
+
+        $results = $this->adapter->query($sql, Adapter::QUERY_MODE_EXECUTE);
+
+        $indexes = array();
+        foreach ($results->toArray() as $row) {
+
+            $indexes[$row['INDEX_NAME']] = array(
+                'index_name' => $row['INDEX_NAME'],
+                'index_type' => $row['INDEX_TYPE'],
+                'table_name' => $row['TABLE_NAME'],
+                'unique' => !$row['NON_UNIQUE'],
+                'columns'    => explode(',',$row['COLUMNS']),
+            );
+        }
+        $this->data['indexes'][$schema][$table] = $indexes;
     }
 
     /**
@@ -263,6 +362,7 @@ class MysqlMetadata extends \Zend\Db\Metadata\Source\MysqlMetadata
     }
     public function createTable(Object\TableObject $table)
     {
+        //var_dump($table);
         $p = $this->adapter->getPlatform();
         $coldefinition = array();
         foreach($table->getColumns() as $column)
@@ -293,6 +393,35 @@ class MysqlMetadata extends \Zend\Db\Metadata\Source\MysqlMetadata
             //$col .= ",\n";
             $coldefinition[] = $col;
         }
+        if($table->getConstraints())
+        {
+            foreach($table->getConstraints() as $constraint)
+            {
+                if($constraint->isPrimaryKey())
+                {
+                    $coldefinition[] = "\t".'PRIMARY KEY (`'.implode('`,`',$constraint->getColumns()).'`)';
+                }
+                elseif($constraint->isUnique())
+                {
+                    $coldefinition[] = "\t".'UNIQUE KEY (`'.implode('`,`',$constraint->getColumns()).'`)';
+                }
+            }
+        }
+        if($table->getIndexes())
+        {
+            foreach($table->getIndexes() as $index)
+            {
+                if($index->isPrimaryKey())
+                {
+                    continue;
+                }
+                $col = "\t".'KEY `'.$index->getName().'` ('.implode(',',$index->getColumns()).') USING '.$index->getType().'';
+                if($index->getComment())
+                    $col .= ' COMMENT \''.$index->getComment().'\'';
+
+                $coldefinition[] = $col;
+            }
+        }
         $sql = 'CREATE TABLE '.$table->getName(). " ( \n";
         $sql .= implode(",\n",$coldefinition)."\n";
         $sql .= ' ) ';
@@ -306,5 +435,19 @@ class MysqlMetadata extends \Zend\Db\Metadata\Source\MysqlMetadata
         }
         //echo $sql.';';
         return $this->adapter->query($sql,Adapter::QUERY_MODE_EXECUTE);
+    }
+    public function createTrigger(Object\TriggerObject $trigger)
+    {
+        $sql = 'CREATE TRIGGER `pageviewArchivId` BEFORE INSERT ON `cp_pageview_archiv`
+FOR EACH ROW BEGIN
+declare v_id bigint unsigned default 0;
+select max(pageviewId) + 1 into v_id from cp_pageview_archiv where uc = new.uc;
+if(v_id IS NULL) THEN
+set v_id = 1;
+END IF;
+set new.pageviewId = v_id;
+END';
+        return $this->adapter->query($sql,Adapter::QUERY_MODE_EXECUTE);
+
     }
 }
